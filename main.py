@@ -352,27 +352,27 @@ def MenuView(page: ft.Page):
     running = True
 
     async def ping_loop():
-       nonlocal running
-    while running:
-        ok = False
-        try:
-            rr = requests.get(f"{API_URL}/menu", timeout=6)
-            ok = rr.ok
-        except Exception:
+        nonlocal running
+        while running:
             ok = False
+            try:
+                rr = requests.get(f"{API_URL}/menu", timeout=6)
+                ok = rr.ok
+            except Exception:
+                ok = False
 
-        if ok:
-            ws_text.value = "Conectado"
-            dot.bgcolor = "#22c55e"
-        else:
-            ws_text.value = "Desconectado"
-            dot.bgcolor = "#ef4444"
+            if ok:
+                ws_text.value = "Conectado"
+                dot.bgcolor = "#22c55e"
+            else:
+                ws_text.value = "Desconectado"
+                dot.bgcolor = "#ef4444"
 
-        try:
-            page.update()
-        except PageDisconnectedException:
-            # la vista ya no existe; cortamos el loop
-            break
+            try:
+                page.update()
+            except PageDisconnectedException:
+                # la vista ya no existe; cortamos el loop
+                break
 
             await asyncio.sleep(8)
 
@@ -380,9 +380,9 @@ def MenuView(page: ft.Page):
         nonlocal running
         running = False
 
-page.views.append(ft.View(route="/menu", controls=[layout_wrapper]))
-page.views[-1].on_dispose = dispose
-page.run_task(ping_loop)
+    page.views.append(ft.View(route="/menu", controls=[layout_wrapper]))
+    page.views[-1].on_dispose = dispose
+    page.run_task(ping_loop)
 
 def StatusView(page: ft.Page, pedido_id: int):
     page.appbar = ft.AppBar(
@@ -651,24 +651,24 @@ def BaristaView(page: ft.Page):
     running = True
     
     async def loop_refresh():
-     nonlocal running
-     while running:
-         await asyncio.sleep(3)
-        # si la vista ya está cerrada, sal del loop
-         try:
-            reload()
-         except PageDisconnectedException:
-            break
-        # reload() hace page.update() indirectamente; por si acaso:
-    try:
-        page.update()
-    except PageDisconnectedException:
-        running = False
-        return
+        nonlocal running
+        while running:
+            await asyncio.sleep(3)
+            # si la vista ya está cerrada, sal del loop
+            try:
+                reload()
+            except PageDisconnectedException:
+                break
+            # reload() hace page.update() indirectamente; por si acaso:
+            try:
+                page.update()
+            except PageDisconnectedException:
+                running = False
+                return
 
     def on_dispose(_):
-      nonlocal running
-      running = False
+        nonlocal running
+        running = False
 
     page.views[-1].on_dispose = on_dispose
     page.run_task(loop_refresh)
