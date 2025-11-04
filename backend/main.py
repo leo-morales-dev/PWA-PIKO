@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from datetime import datetime
 import json
 
@@ -18,7 +18,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from backend.models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
+from backend.models import (
+    SessionLocal,
+    engine,
+    Producto as ProductoModel,
+    Pedido as PedidoModel,
+)
 
 app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
 
@@ -104,17 +109,15 @@ def _startup():
     # seed de productos y ALTER defensivo para columna 'modo'
     with SessionLocal() as db:
         seed_menu(db)
-        conn = db.connection()
 
-        def ensure_column(sql: str) -> None:
-            try:
-                conn.execute(text(sql))
-            except Exception:
-                # si la columna ya existe (o el ALTER falla), lo ignoramos
-                pass
+    with engine.begin() as conn:
+        existing = {col["name"] for col in inspect(conn).get_columns("pedidos")}
 
-        ensure_column("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''")
-        ensure_column("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''")
+        if "modo" not in existing:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''"))
+
+        if "cliente_nombre" not in existing:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''"))
 
 # ------------------------ Endpoints ------------------------
 @app.get("/api/menu")
