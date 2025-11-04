@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Checkout pedido</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background-color: #fafafa;
+      padding: 20px;
+    }
+    .ok { color: #0a7; }
+    .err { color: #c00; }
+    button { padding: 8px 14px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Enviando pedido...</h2>
+  <p id="status">Preparando envío...</p>
+  <button id="back">Volver a la app</button>
+
+  <script>
+  const API = 'http://127.0.0.1:9000/api';
+  const statusEl = document.getElementById('status');
+  document.getElementById('back').addEventListener('click', () => history.back());
+
+  // genera o recupera un cliente_id
+  function ensureClientId() {
+    let cid = localStorage.getItem('cliente_id');
+    if (!cid) {
+      cid = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
+      localStorage.setItem('cliente_id', cid);
+    }
+    return cid;
+  }
+
+  (async () => {
+    try {
+      const raw = localStorage.getItem('pedido');
+      if (!raw) {
+        statusEl.textContent = 'No hay pedido en localStorage.';
+        statusEl.className = 'err';
+        return;
+      }
+      const payload = JSON.parse(raw);
+      payload.cliente_id = ensureClientId();                  // <<<<<<
+
+      const r = await fetch(`${API}/pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const d = await r.json();
+
+      if (d.ok && d.id) {
+        statusEl.textContent = '✅ Pedido enviado correctamente';
+        localStorage.removeItem('pedido');
+        statusEl.className = 'ok';
+        // abre la página de estado para escuchar notificaciones
+        setTimeout(() => {
+          location.href = `/status.html?pedido=${encodeURIComponent(d.id)}`;
+        }, 800);
+      } else {
+        statusEl.textContent = 'Error al enviar: ' + JSON.stringify(d);
+        statusEl.className = 'err';
+      }
+    } catch (e) {
+      statusEl.textContent = '📡 Error (quizá sin conexión): ' + e;
+      statusEl.className = 'err';
+    }
+  })();
+</script>
+
+</body>
+</html>

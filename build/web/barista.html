@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Panel Barista</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#111827; --muted:#9aa3af;
+      --ok:#22c55e; --warn:#60a5fa; --title:#e5e7eb; --sep:#1f2937;
+      --box:#0f172a; --danger:#ef4444; --pill:#1f2937;
+      --font: system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--title); font-family:var(--font);
+      display:flex; flex-direction:column;
+    }
+    header{
+      padding:16px 24px; background:var(--panel); border-bottom:1px solid var(--sep);
+      display:flex; justify-content:space-between; align-items:center;
+      position:sticky; top:0; z-index:10;
+    }
+    header h1{ margin:0; font-size:24px; font-weight:700; letter-spacing:.3px;}
+    header .right{display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px}
+    .dot{width:10px;height:10px;border-radius:99px}
+    .ok-dot{background:#22c55e} .bad-dot{background:#ef4444}
+
+    .wrap{ max-width:1100px; width:100%; margin:18px auto; padding:0 16px }
+    .card{ background:var(--panel); border:1px solid var(--sep); border-radius:14px; overflow:hidden }
+    .card-head{ padding:14px 16px; border-bottom:1px solid var(--sep); display:flex; justify-content:space-between; align-items:center }
+    .card-head h2{ margin:0; font-size:18px }
+    .pill{ background:var(--pill); color:#cbd5e1; font-size:12px; padding:4px 10px; border-radius:999px }
+
+    table{ width:100%; border-collapse:separate; border-spacing:0 }
+    thead th{ text-align:left; font-weight:600; color:#cbd5e1; padding:12px 14px; background:#0d1520; position:sticky; top:0 }
+    tbody td{ padding:12px 14px; border-top:1px solid var(--sep); vertical-align:middle }
+    tbody tr:hover{ background:#0f1a28 }
+
+    .tag{ padding:4px 10px; border-radius:999px; font-size:12px; background:#374151; color:#e5e7eb; text-transform:capitalize}
+    .pendiente{ background:#7c5c00; }      /* ámbar oscuro */
+    .preparando{ background:#1d4ed8; }     /* azul */
+    .listo{ background:#16a34a; }          /* verde */
+    .confirmado{ background:#059669; }     /* verde más oscuro */
+
+    .btn{
+      appearance:none; border:none; outline:none; cursor:pointer;
+      padding:8px 12px; border-radius:10px; font-weight:600; font-size:13px;
+      color:#e5e7eb; background:#1f2937; transition:transform .05s ease, background .2s ease;
+    }
+    .btn:hover{ background:#243144 }
+    .btn:active{ transform: scale(.98) }
+    .btn.primary{ background:#1d4ed8 }
+    .btn.primary:hover{ background:#2555e1 }
+    .btn.success{ background:#16a34a }
+    .btn.success:hover{ background:#1cb154 }
+
+    .row-id{ font-weight:800; letter-spacing:.5px }
+    .money{ font-variant-numeric: tabular-nums; }
+
+    .blink{ animation: blink .9s ease-in-out 3; }
+    @keyframes blink{ 0%,100%{background:transparent} 50%{background:#132132} }
+
+    footer{padding:10px 16px; color:var(--muted); font-size:12px; text-align:right}
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Panel del barista</h1>
+    <div class="right">
+      <span id="statusTxt">Conectando…</span>
+      <div id="wsDot" class="dot bad-dot"></div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-head">
+        <h2>Pedidos en curso</h2>
+        <span class="pill" id="count">0 pedidos</span>
+      </div>
+
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px">ID</th>
+              <th>Productos</th>
+              <th style="width:140px">Total</th>
+              <th style="width:160px">Estado</th>
+              <th style="width:240px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>© Cafetería Universitaria</footer>
+
+<script>
+  const API = "http://127.0.0.1:9000/api";
+  const WS  = "ws://127.0.0.1:9000/ws/pedidos";
+
+  const $ = (q)=>document.querySelector(q);
+  const tbody   = $("#tbody");
+  const statusTxt = $("#statusTxt");
+  const wsDot   = $("#wsDot");
+  const countEl = $("#count");
+
+  // --- permisos de notificación ---
+  (async () => {
+    if ("Notification" in window && Notification.permission === "default") {
+      try { await Notification.requestPermission(); } catch {}
+    }
+  })();
+
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = "sine"; o.frequency.value = 880;
+      g.gain.setValueAtTime(0.001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime+0.01);
+      o.start();
+      setTimeout(()=>{ g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.03); o.stop(ctx.currentTime+0.05); }, 120);
+    } catch {}
+  }
+
+  function notifyBarista(title, body) {
+    try {
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body });
+      }
+    } catch {}
+  }
+
+  const rowId = (id) => `row-${id}`;
+  const estadoClass = (e) => (e||"").toLowerCase();
+
+  function updateCount(){
+    countEl.textContent = `${tbody.children.length} pedido${tbody.children.length===1?'':'s'}`;
+  }
+
+  function renderRow(p, blink=true) {
+    const tr = document.createElement("tr");
+    tr.id = rowId(p.id);
+    if (blink) tr.classList.add("blink");
+    tr.innerHTML = `
+      <td class="row-id">${String(p.id).padStart(3,"0")}</td>
+      <td class="prods">${(p.productos_nombres||[]).join(", ")}</td>
+      <td class="total money">$${p.total.toFixed ? p.total.toFixed(2) : p.total}</td>
+      <td><span class="tag ${estadoClass(p.estado)}">${p.estado}</span></td>
+      <td>
+        <button class="btn primary" data-id="${p.id}" data-estado="preparando">Preparando</button>
+        <button class="btn success" data-id="${p.id}" data-estado="listo">Listo</button>
+      </td>`;
+    tbody.prepend(tr);
+    setTimeout(()=>tr.classList.remove("blink"), 1100);
+    updateCount();
+  }
+
+  function upsert(p){
+    let tr = document.getElementById(rowId(p.id));
+    if (!tr) return renderRow(p);
+    tr.classList.add("blink");
+    tr.querySelector(".prods").textContent = (p.productos_nombres||[]).join(", ");
+    tr.querySelector(".total").textContent = `$${p.total.toFixed ? p.total.toFixed(2) : p.total}`;
+    const tag = tr.children[3].querySelector(".tag");
+    tag.textContent = p.estado;
+    tag.className = `tag ${estadoClass(p.estado)}`;
+    setTimeout(()=>tr.classList.remove("blink"), 900);
+  }
+
+  async function putEstado(id, estado) {
+    if (estado === "listo") {
+      const ok = confirm("¿Notificar al cliente que el pedido está LISTO?");
+      if (!ok) return;
+    }
+    const res = await fetch(`${API}/pedidos/${id}/estado`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado })
+    });
+    if (!res.ok) alert("No se pudo actualizar el estado.");
+  }
+
+  tbody.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    putEstado(btn.dataset.id, btn.dataset.estado);
+  });
+
+  // Carga inicial
+(async () => {
+  const r = await fetch(`${API}/pedidos`);
+  const data = await r.json();
+  data.forEach(p => renderRow(p, false)); // muestra sin parpadeo
+  updateCount();
+})();
+
+
+  // WebSocket
+  const ws = new WebSocket(WS);
+  ws.onopen  = () => { statusTxt.textContent = "Conectado"; wsDot.className="dot ok-dot"; };
+  ws.onclose = () => { statusTxt.textContent = "Desconectado"; wsDot.className="dot bad-dot"; };
+  ws.onerror = () => { statusTxt.textContent = "Error WS"; wsDot.className="dot bad-dot"; };
+
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (!msg?.pedido) return;
+      const p = msg.pedido;
+
+      if (msg.type === "nuevo_pedido") {
+        upsert(p);
+      } else if (msg.type === "estado_actualizado") {
+        if (p.estado === "confirmado") {
+          notifyBarista(`Pedido #${p.id} confirmado`, "El cliente recibió la notificación.");
+          beep();
+        }
+        upsert(p);
+      }
+    } catch {}
+  };
+</script>
+
+</body>
+</html>
