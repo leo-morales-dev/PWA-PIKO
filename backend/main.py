@@ -3,22 +3,14 @@ from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconn
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 from datetime import datetime
 import json
 
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],          # <-- abrir para desarrollo
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-from backend.models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
+try:
+    from backend.models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
+except ModuleNotFoundError:  # running from the backend folder (Render root dir)
+    from models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
 
 app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
 
@@ -104,14 +96,18 @@ def _startup():
     # seed de productos y ALTER defensivo para columna 'modo'
     with SessionLocal() as db:
         seed_menu(db)
-        try:
-            conn = db.connection()
-            # SQLite: intenta agregar columna 'modo' si no existe
-            conn.execute(text("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''"))
-            conn.execute(text("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''"))
-        except Exception:
-            # si ya existe, se ignora
-            pass
+        conn = db.connection()
+
+        def _ensure_column(column_sql: str) -> None:
+            try:
+                conn.execute(text(column_sql))
+            except OperationalError:
+                # La columna ya existe; ignoramos el error.
+                pass
+
+        # SQLite: intenta agregar columnas si no existen.
+        _ensure_column("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''")
+        _ensure_column("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''")
 
 # ------------------------ Endpoints ------------------------
 @app.get("/api/menu")
