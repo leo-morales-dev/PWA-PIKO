@@ -1,22 +1,10 @@
-# backend/main.py
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from sqlalchemy import inspect, text
 from datetime import datetime
 import json
 
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],          # <-- abrir para desarrollo
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+from sqlalchemy import inspect, text
+from sqlalchemy.orm import Session
 
 from backend.models import (
     SessionLocal,
@@ -30,7 +18,7 @@ app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
 # CORS amplio para desarrollo (Flet lanza en puertos aleatorios)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],           # <--- en producción, restringe
+    allow_origins=["*"],  # <--- en producción, restringe
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
