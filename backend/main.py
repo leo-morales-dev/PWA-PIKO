@@ -113,11 +113,16 @@ def _startup():
     with engine.begin() as conn:
         existing = {col["name"] for col in inspect(conn).get_columns("pedidos")}
 
-        if "modo" not in existing:
-            conn.execute(text("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''"))
+        def add_column_if_missing(column: str, ddl: str) -> None:
+            if column not in existing:
+                conn.execute(text(ddl))
+                existing.add(column)
 
-        if "cliente_nombre" not in existing:
-            conn.execute(text("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''"))
+        add_column_if_missing("modo", "ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''")
+        add_column_if_missing(
+            "cliente_nombre",
+            "ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''",
+        )
 
 # ------------------------ Endpoints ------------------------
 @app.get("/api/menu")
