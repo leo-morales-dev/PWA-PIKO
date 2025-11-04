@@ -67,6 +67,7 @@ class AppState:
         self.menu: List[Dict[str, Any]] = []
         self.carrito: List[Dict[str, Any]] = []
         self.pedido_id: Optional[int] = None
+        self.cliente_nombre: str = ""
 
     def total(self) -> float:
         return sum(float(p.get("precio", 0)) for p in self.carrito)
@@ -96,6 +97,7 @@ def LandingView(page: ft.Page):
 
     def pick(mode: str):
         state.modo = mode
+        state.cliente_nombre = state.cliente_nombre or ""
         page.go("/menu")
 
     def option_card(title: str, desc: str, icon_name: str, on_click):
@@ -281,12 +283,37 @@ def MenuView(page: ft.Page):
         )
     )
 
+    name_field = ft.TextField(
+        value=state.cliente_nombre,
+        label="Nombre para el pedido",
+        hint_text="Ej. Ana Pérez",
+        bgcolor=BOX,
+        border_color=BORDER,
+        focused_border_color=BLUE600,
+        cursor_color=WHITE,
+        text_size=14,
+        border_radius=10,
+        on_change=lambda e: setattr(state, "cliente_nombre", e.control.value.strip()),
+    )
+
+    name_wrapper = box_container(
+        ft.Column(
+            spacing=6,
+            controls=[
+                ft.Text("¿Cómo te llamas?", size=12, color=MUTED),
+                name_field,
+            ],
+        ),
+        pad=12,
+    )
+
     cart_card = ft.Container(
         bgcolor=PANEL, border=ft.border.all(1, BORDER), border_radius=14, padding=14,
         content=ft.Column(
             spacing=12,
             controls=[
                 ft.Text("Tu pedido", size=18, weight=ft.FontWeight.W_700),
+                name_wrapper,
                 ft.Container(content=cart_list, height=320),
                 ft.Container(
                     border=ft.border.only(top=ft.BorderSide(1, BORDER)), padding=ft.padding.only(top=8),
@@ -334,6 +361,7 @@ def MenuView(page: ft.Page):
             "total": state.total(),
             "estado": "pendiente",
             "modo": state.modo or "",
+            "cliente_nombre": state.cliente_nombre.strip(),
         }
         try:
             r = requests.post(f"{API_URL}/pedidos", json=payload, timeout=10)
@@ -397,6 +425,8 @@ def StatusView(page: ft.Page, pedido_id: int):
     prods_list = ft.Column(spacing=6)
     total_text = ft.Text("$0.00", weight=ft.FontWeight.W_800)
 
+    cliente_text = ft.Text("", color=MUTED, size=13, italic=True, opacity=0.0)
+
     info_card = card_container(
         ft.Column(
             spacing=10,
@@ -404,6 +434,7 @@ def StatusView(page: ft.Page, pedido_id: int):
                 ft.Row([ft.Text("Estado del pedido", weight=ft.FontWeight.W_700, size=18), estado_chip],
                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 estado_text,
+                cliente_text,
                 ft.Text("Productos", weight=ft.FontWeight.W_700),
                 box_container(prods_list, pad=10),
                 ft.Row([ft.Text("Total", color=MUTED), total_text], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
@@ -441,6 +472,13 @@ def StatusView(page: ft.Page, pedido_id: int):
                     estado_text.value = f"Estado: {est.capitalize()}"
                     estado_chip.content = ft.Text(est, size=12, color="#e5e7eb")
                     estado_chip.bgcolor = state_color(est)
+                    nombre_cliente = (pedido.get("cliente_nombre") or "").strip()
+                    if nombre_cliente:
+                        cliente_text.value = f"Para: {nombre_cliente}"
+                        cliente_text.opacity = 1.0
+                    else:
+                        cliente_text.value = ""
+                        cliente_text.opacity = 0.0
                     prods_list.controls.clear()
                     for name in (pedido.get("productos_nombres") or []):
                         prods_list.controls.append(ft.Text(f"• {name}"))

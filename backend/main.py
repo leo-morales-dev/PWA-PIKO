@@ -95,6 +95,7 @@ def serialize_pedido(p: PedidoModel, name_map: dict[int, str]) -> dict:
         "estado": p.estado,
         "fecha": p.fecha.isoformat(),
         "modo": getattr(p, "modo", ""),   # <--- evita AttributeError si la columna no existe
+        "cliente_nombre": getattr(p, "cliente_nombre", ""),
     }
 
 # ------------------------ Startup ------------------------
@@ -103,13 +104,17 @@ def _startup():
     # seed de productos y ALTER defensivo para columna 'modo'
     with SessionLocal() as db:
         seed_menu(db)
-        try:
-            conn = db.connection()
-            # SQLite: intenta agregar columna 'modo' si no existe
-            conn.execute(text("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''"))
-        except Exception:
-            # si ya existe, se ignora
-            pass
+        conn = db.connection()
+
+        def ensure_column(sql: str) -> None:
+            try:
+                conn.execute(text(sql))
+            except Exception:
+                # si la columna ya existe (o el ALTER falla), lo ignoramos
+                pass
+
+        ensure_column("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''")
+        ensure_column("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''")
 
 # ------------------------ Endpoints ------------------------
 @app.get("/api/menu")
@@ -142,6 +147,7 @@ async def crear_pedido(pedido: dict, db: Session = Depends(get_db)):
     estado     = str(pedido.get("estado", "pendiente"))
     cliente_id = str(pedido.get("cliente_id", ""))     # origen: PWA
     modo       = str(pedido.get("modo", ""))           # "Comer aquí" / "Para llevar"
+    cliente_nombre = str(pedido.get("cliente_nombre", ""))
 
     nuevo = PedidoModel(
         productos=json.dumps(productos),
@@ -149,6 +155,7 @@ async def crear_pedido(pedido: dict, db: Session = Depends(get_db)):
         estado=estado,
         fecha=datetime.utcnow(),
         modo=modo,                                      # <--- guardar modo
+        cliente_nombre=cliente_nombre,
     )
     db.add(nuevo)
     db.commit()
