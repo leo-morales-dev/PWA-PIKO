@@ -97,7 +97,7 @@ def LandingView(page: ft.Page):
 
     def pick(mode: str):
         state.modo = mode
-        state.cliente_nombre = state.cliente_nombre or ""
+        state.cliente_nombre = ""
         page.go("/menu")
 
     def option_card(title: str, desc: str, icon_name: str, on_click):
@@ -162,6 +162,9 @@ def LandingView(page: ft.Page):
 
 def MenuView(page: ft.Page):
     # Header
+
+    # Siempre arrancar con el nombre limpio al entrar al menú
+    state.cliente_nombre = ""
     cart_badge = ft.Container(
         content=ft.Text("0 productos", size=12, color="#cbd5e1"),
         bgcolor=BADGE,
@@ -408,7 +411,9 @@ def MenuView(page: ft.Page):
         nonlocal running
         running = False
 
-    page.views.append(ft.View(route="/menu", controls=[layout_wrapper]))
+    page.views.append(
+        ft.View(route="/menu", controls=[layout_wrapper], scroll=ft.ScrollMode.AUTO)
+    )
     page.views[-1].on_dispose = dispose
     page.run_task(ping_loop)
 
