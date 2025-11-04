@@ -44,6 +44,7 @@ class Pedido(Base):
     estado = Column(String, nullable=False, default="pendiente", index=True)
     fecha = Column(DateTime, nullable=False, default=datetime.utcnow)
     modo = Column(String, default="")   # <-- NUEVO
+    cliente_nombre = Column(String, default="")
 
 # ---- Crear tablas si no existen ----
 Base.metadata.create_all(bind=engine)

@@ -95,6 +95,7 @@ def serialize_pedido(p: PedidoModel, name_map: dict[int, str]) -> dict:
         "estado": p.estado,
         "fecha": p.fecha.isoformat(),
         "modo": getattr(p, "modo", ""),   # <--- evita AttributeError si la columna no existe
+        "cliente_nombre": getattr(p, "cliente_nombre", ""),
     }
 
 # ------------------------ Startup ------------------------
@@ -107,6 +108,7 @@ def _startup():
             conn = db.connection()
             # SQLite: intenta agregar columna 'modo' si no existe
             conn.execute(text("ALTER TABLE pedidos ADD COLUMN modo VARCHAR DEFAULT ''"))
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN cliente_nombre VARCHAR DEFAULT ''"))
         except Exception:
             # si ya existe, se ignora
             pass
@@ -142,6 +144,7 @@ async def crear_pedido(pedido: dict, db: Session = Depends(get_db)):
     estado     = str(pedido.get("estado", "pendiente"))
     cliente_id = str(pedido.get("cliente_id", ""))     # origen: PWA
     modo       = str(pedido.get("modo", ""))           # "Comer aquí" / "Para llevar"
+    cliente_nombre = str(pedido.get("cliente_nombre", ""))
 
     nuevo = PedidoModel(
         productos=json.dumps(productos),
@@ -149,6 +152,7 @@ async def crear_pedido(pedido: dict, db: Session = Depends(get_db)):
         estado=estado,
         fecha=datetime.utcnow(),
         modo=modo,                                      # <--- guardar modo
+        cliente_nombre=cliente_nombre,
     )
     db.add(nuevo)
     db.commit()
