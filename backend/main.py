@@ -19,7 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from backend.models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
+try:
+    from backend.models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
+except ModuleNotFoundError:  # running from the backend folder (Render root dir)
+    from models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
 
 app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
 
