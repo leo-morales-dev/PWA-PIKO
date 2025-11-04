@@ -1,1 +1,11 @@
 node_modules
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.Python
+.env
+venv/
+.envrc
+.python-version
