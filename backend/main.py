@@ -57,19 +57,42 @@ def serve_index_root():
     return serve_static_page("index.html")
 
 
-@app.get("/menu", include_in_schema=False)
-def serve_menu_page():
-    return serve_static_page("menu.html")
+STATIC_PAGE_ROUTES = {
+    "menu": "menu.html",
+    "status": "status.html",
+    "barista": "barista.html",
+}
 
 
-@app.get("/status", include_in_schema=False)
-def serve_status_page():
-    return serve_static_page("status.html")
+def _register_static_page(path: str, filename: str) -> None:
+    endpoint_name = f"serve_{path or 'index'}_page"
+
+    @app.get(f"/{path}", include_in_schema=False, name=endpoint_name)
+    def _serve_static_page(filename: str = filename):  # type: ignore[func-returns-value]
+        return serve_static_page(filename)
 
 
-@app.get("/barista", include_in_schema=False)
-def serve_barista_page():
-    return serve_static_page("barista.html")
+for _path, _filename in STATIC_PAGE_ROUTES.items():
+    _register_static_page(_path, _filename)
+
+# Fallback SPA para rutas conocidas (sin bloquear /api ni /ws)
+@app.get("/{full_path:path}", include_in_schema=False)
+def spa_fallback(full_path: str):
+    if full_path.startswith("api") or full_path.startswith("ws"):
+        return {"detail": "Not Found"}
+
+    slug = full_path.strip("/")
+    if slug in STATIC_PAGE_ROUTES:
+        return serve_static_page(STATIC_PAGE_ROUTES[slug])
+
+    candidate = (STATIC_DIR / full_path).resolve()
+    static_root = STATIC_DIR.resolve()
+    if static_root in candidate.parents or candidate == static_root:
+        if candidate.is_file():
+            return FileResponse(candidate)
+
+    return serve_static_page("index.html")
+
 
 # ------------------------ DB helpers ------------------------
 def get_db():
