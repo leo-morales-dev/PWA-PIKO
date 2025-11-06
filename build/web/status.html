@@ -27,13 +27,16 @@
     header .status{display:flex;align-items:center;gap:10px;min-width:fit-content;}
     header .dot{width:10px;height:10px;border-radius:99px;}
     .nav-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-    .nav-links a{
-      text-decoration:none; color:#e5e7eb; background:#1f2937; border-radius:999px;
-      padding:8px 16px; font-weight:600; font-size:14px; display:inline-flex; align-items:center;
-      transition:background .2s ease, transform .08s ease;
+    .btn{
+      appearance:none; border:none; outline:none; cursor:pointer;
+      padding:8px 12px; border-radius:10px; font-weight:600; font-size:13px;
+      color:#e5e7eb; background:#1f2937; transition:transform .05s ease, background .2s ease;
+      display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
     }
-    .nav-links a:hover{background:#243144;}
-    .nav-links a:active{transform:scale(.98);}
+    .btn:hover{ background:#243144 }
+    .btn:active{ transform:scale(.98) }
+    .btn.ghost{ background:transparent; border:1px solid var(--sep); color:#cbd5e1 }
+    .btn.ghost:hover{ background:#0f1a28 }
     .ok-dot{background:#22c55e} .bad-dot{background:#ef4444}
     main{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px;}
     .col{
@@ -71,8 +74,8 @@
   <header>
     <h1>Pantalla de pedidos</h1>
     <nav class="nav-links">
-      <a href="/menu.html">Ir al menú</a>
-      <a href="/barista.html">Panel del barista</a>
+      <a class="btn ghost" href="/menu.html">Ir al menú</a>
+      <a class="btn ghost" href="/barista.html">Panel del barista</a>
     </nav>
     <div class="status">
       <span id="wsStatus">Conectando…</span>
