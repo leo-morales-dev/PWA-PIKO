@@ -45,22 +45,31 @@ def head_root():
     return {}
 
 # Raíz -> index.html
+def _serve_static_page(filename: str):
+    page = STATIC_DIR / filename
+    if page.exists():
+        return FileResponse(page)
+    return {"detail": f"{filename} no encontrado en /build/web"}
+
+
 @app.get("/", include_in_schema=False)
 def serve_index_root():
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return FileResponse(index)
-    return {"detail": "index.html no encontrado en /build/web"}
+    return _serve_static_page("index.html")
 
-# Fallback SPA para rutas de la app (excepto /api y /ws)
-@app.get("/{full_path:path}", include_in_schema=False)
-def spa_fallback(full_path: str):
-    if full_path.startswith("api") or full_path.startswith("ws"):
-        return {"detail": "Not Found"}
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return FileResponse(index)
-    return {"detail": "index.html no encontrado en /build/web"}
+
+@app.get("/menu", include_in_schema=False)
+def serve_menu_page():
+    return _serve_static_page("menu.html")
+
+
+@app.get("/status", include_in_schema=False)
+def serve_status_page():
+    return _serve_static_page("status.html")
+
+
+@app.get("/barista", include_in_schema=False)
+def serve_barista_page():
+    return _serve_static_page("barista.html")
 
 # ------------------------ DB helpers ------------------------
 def get_db():
@@ -222,6 +231,21 @@ async def actualizar_estado(pedido_id: int, body: dict, db: Session = Depends(ge
 
     await manager.broadcast_json({"type": "estado_actualizado", "pedido": payload})
     return {"ok": True}
+
+
+# ------------------------ Fallback SPA ------------------------
+@app.get("/{full_path:path}", include_in_schema=False)
+def spa_fallback(full_path: str):
+    """Devuelve index.html para rutas de la PWA sin ruta explícita."""
+
+    if full_path.startswith("api") or full_path.startswith("ws"):
+        return {"detail": "Not Found"}
+
+    index = STATIC_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index)
+    return {"detail": "index.html no encontrado en /build/web"}
+
 
 # ===== WebSocket para tablero / barista / clientes =====
 @app.websocket("/ws/pedidos")
