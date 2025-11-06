@@ -21,9 +21,22 @@
     header{
       padding:16px 24px; background:var(--panel); border-bottom:1px solid var(--sep);
       display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:12px;
     }
     header h1{ margin:0; font-size:28px; font-weight:700; letter-spacing:.3px;}
-    header .dot{width:10px;height:10px;border-radius:99px;margin-left:8px;}
+    header .status{display:flex;align-items:center;gap:10px;min-width:fit-content;}
+    header .dot{width:10px;height:10px;border-radius:99px;}
+    .nav-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .btn{
+      appearance:none; border:none; outline:none; cursor:pointer;
+      padding:8px 12px; border-radius:10px; font-weight:600; font-size:13px;
+      color:#e5e7eb; background:#1f2937; transition:transform .05s ease, background .2s ease;
+      display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
+    }
+    .btn:hover{ background:#243144 }
+    .btn:active{ transform:scale(.98) }
+    .btn.ghost{ background:transparent; border:1px solid var(--sep); color:#cbd5e1 }
+    .btn.ghost:hover{ background:#0f1a28 }
     .ok-dot{background:#22c55e} .bad-dot{background:#ef4444}
     main{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px;}
     .col{
@@ -60,7 +73,11 @@
 <body>
   <header>
     <h1>Pantalla de pedidos</h1>
-    <div style="display:flex;align-items:center;gap:10px">
+    <nav class="nav-links">
+      <a class="btn ghost" href="/menu.html">Ir al menú</a>
+      <a class="btn ghost" href="/barista.html">Panel del barista</a>
+    </nav>
+    <div class="status">
       <span id="wsStatus">Conectando…</span>
       <div id="wsDot" class="dot bad-dot"></div>
     </div>

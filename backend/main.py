@@ -45,12 +45,34 @@ def head_root():
     return {}
 
 # Raíz -> index.html
+def _serve_page(filename: str):
+    path = STATIC_DIR / filename
+    if path.exists():
+        return FileResponse(path)
+    raise HTTPException(status_code=404, detail=f"{filename} no encontrado en /build/web")
+
+
 @app.get("/", include_in_schema=False)
 def serve_index_root():
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return FileResponse(index)
-    return {"detail": "index.html no encontrado en /build/web"}
+    return _serve_page("index.html")
+
+
+@app.get("/menu", include_in_schema=False)
+@app.get("/menu.html", include_in_schema=False)
+def serve_menu_page():
+    return _serve_page("menu.html")
+
+
+@app.get("/status", include_in_schema=False)
+@app.get("/status.html", include_in_schema=False)
+def serve_status_page():
+    return _serve_page("status.html")
+
+
+@app.get("/barista", include_in_schema=False)
+@app.get("/barista.html", include_in_schema=False)
+def serve_barista_page():
+    return _serve_page("barista.html")
 
 # ------------------------ DB helpers ------------------------
 def get_db():
