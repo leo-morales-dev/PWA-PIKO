@@ -29,6 +29,7 @@
     .brand{ display:flex; align-items:center; gap:10px }
     .brand h1{ margin:0; font-size:22px; letter-spacing:.3px }
     .badge{ background:var(--pill); color:#cbd5e1; padding:4px 10px; border-radius:999px; font-size:12px }
+    .nav{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center }
     .right{ display:flex; align-items:center; gap:10px; color:var(--muted) }
     .dot{ width:10px; height:10px; border-radius:999px; }
     .ok{ background:#22c55e } .bad{ background:#ef4444 }
@@ -61,6 +62,7 @@
       appearance:none; border:none; outline:none; cursor:pointer;
       padding:8px 12px; border-radius:10px; font-weight:600; font-size:13px;
       color:#e5e7eb; background:#1f2937; transition:transform .05s ease, background .2s ease;
+      display:inline-flex; align-items:center; justify-content:center; text-decoration:none;
     }
     .btn:hover{ background:#243144 }
     .btn:active{ transform:scale(.98) }
@@ -94,6 +96,10 @@
       <h1>Cafetería Universitaria</h1>
       <span class="badge" id="cartCount">0 productos</span>
     </div>
+    <nav class="nav" aria-label="Secciones del sistema">
+      <a class="btn ghost" href="/status">Pantalla de pedidos</a>
+      <a class="btn ghost" href="/barista">Panel del barista</a>
+    </nav>
     <div class="right">
       <span id="wsTxt">Conectando…</span>
       <div id="wsDot" class="dot bad"></div>
