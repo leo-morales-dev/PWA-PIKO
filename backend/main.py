@@ -28,37 +28,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ------------------------ Servir PWA (carpeta build/) ------------------------
-# Estructura asumida:
+# ------------------------ Servir PWA (carpeta build/web/) ------------------------
+# Estructura:
 # repo/
-# ├─ build/           <-- salida ya comiteada del front (index.html, assets, etc.)
-# └─ backend/
-#     └─ main.py
-STATIC_DIR = Path(__file__).parent.parent / "build"
+# ├─ build/web/       <-- index.html, assets, manifest, etc.
+# └─ backend/main.py
+STATIC_DIR = Path(__file__).parent.parent / "build" / "web"
 
-# Si tu bundler usa subcarpeta "assets", esto ayuda a servir recursos pesados con /static/*
-# (aunque no es obligatorio, es útil para cacheo/CDN)
+# Sirve assets si existen (útil para cache/CDN)
 if (STATIC_DIR / "assets").exists():
     app.mount("/static", StaticFiles(directory=STATIC_DIR / "assets"), name="static")
 
-# Ruta raíz: devuelve la SPA
+# HEAD / (para health-check de Render)
+@app.head("/", include_in_schema=False)
+def head_root():
+    return {}
+
+# Raíz -> index.html
 @app.get("/", include_in_schema=False)
 def serve_index_root():
     index = STATIC_DIR / "index.html"
     if index.exists():
         return FileResponse(index)
-    return {"detail": "index.html no encontrado en /build"}
+    return {"detail": "index.html no encontrado en /build/web"}
 
-# Fallback de SPA: para cualquier GET que no empiece con "api" ni "ws", devuelve index.html
+# Fallback SPA para rutas de la app (excepto /api y /ws)
 @app.get("/{full_path:path}", include_in_schema=False)
 def spa_fallback(full_path: str):
-    # preserva /api/* para el backend y deja libres posibles rutas de websockets (/ws/*)
     if full_path.startswith("api") or full_path.startswith("ws"):
         return {"detail": "Not Found"}
     index = STATIC_DIR / "index.html"
     if index.exists():
         return FileResponse(index)
-    return {"detail": "index.html no encontrado en /build"}
+    return {"detail": "index.html no encontrado en /build/web"}
 
 # ------------------------ DB helpers ------------------------
 def get_db():
