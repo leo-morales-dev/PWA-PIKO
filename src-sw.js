@@ -10,6 +10,36 @@ import {BackgroundSyncPlugin} from 'workbox-background-sync';
 clientsClaim();
 setCacheNameDetails({ prefix: 'cafeteria' });
 
+const LOCAL_BACKEND = 'http://127.0.0.1:9000';
+const normalizeOrigin = (value) => String(value || '').trim().replace(/\/+$/, '');
+function resolveBackendOrigin() {
+  const forced = (typeof self.__BACKEND_ORIGIN__ === 'string' ? self.__BACKEND_ORIGIN__.trim() : '');
+  if (forced) return normalizeOrigin(forced);
+  const { hostname, origin } = self.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return LOCAL_BACKEND;
+  }
+  return normalizeOrigin(origin);
+}
+let BACKEND_ORIGIN = resolveBackendOrigin();
+self.__BACKEND_ORIGIN__ = BACKEND_ORIGIN;
+const apiUrl = (path) => {
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  return `${BACKEND_ORIGIN}${clean}`;
+};
+
+self.addEventListener('message', (event) => {
+  const data = event?.data;
+  if (!data || typeof data !== 'object') return;
+  if (data.type === 'SET_BACKEND_ORIGIN') {
+    const value = (data.value || '').trim();
+    if (value) {
+      BACKEND_ORIGIN = normalizeOrigin(value);
+      self.__BACKEND_ORIGIN__ = BACKEND_ORIGIN;
+    }
+  }
+});
+
 // Inyecta el precache del build (lo hace Workbox)
 precacheAndRoute(self.__WB_MANIFEST || []);
 
@@ -81,7 +111,7 @@ self.addEventListener('notificationclick', (event) => {
 
   if (action === 'confirm') {
     // ⚠️ IMPORTANTE: origen del front
-    event.waitUntil(fetch(`http://127.0.0.1:9000/api/pedidos/${id}/estado`, {
+    event.waitUntil(fetch(apiUrl(`/api/pedidos/${id}/estado`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: 'confirmado' })

@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <title>Cafetería Universitaria · Menú</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Configura este meta con la URL pública de tu backend (sin /api) cuando despliegues -->
+  <meta name="backend-origin" content="" />
 
   <style>
     :root{
@@ -124,9 +126,37 @@
 
 <script>
   // ---- CONFIG ----
-  const API = "http://127.0.0.1:9000/api";
-  const WS  = "ws://127.0.0.1:9000/ws/pedidos";
+  const LOCAL_BACKEND = "http://127.0.0.1:9000";
+  const normalizeOrigin = (value) => String(value || '').trim().replace(/\/+$/, "");
+  const toWs = (origin) => origin.replace(/^http/, "ws");
+  function resolveBackendOrigin(){
+    const forced = (window.__BACKEND_ORIGIN__ || "").trim();
+    if (forced) return normalizeOrigin(forced);
+    const meta = document.querySelector('meta[name="backend-origin"]');
+    if (meta && meta.content && meta.content.trim()) {
+      return normalizeOrigin(meta.content.trim());
+    }
+    const { hostname, origin } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return LOCAL_BACKEND;
+    }
+    return normalizeOrigin(origin);
+  }
+  const BACKEND_ORIGIN = resolveBackendOrigin();
+  window.__BACKEND_ORIGIN__ = BACKEND_ORIGIN;
+  const API = `${BACKEND_ORIGIN}/api`;
+  const WS  = `${toWs(BACKEND_ORIGIN)}/ws/pedidos`;
   const CURRENCY = (n)=>"$"+(Number(n||0)).toFixed(2);
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.ready
+      .then((reg)=>{
+        if (reg.active) {
+          reg.active.postMessage({ type: "SET_BACKEND_ORIGIN", value: BACKEND_ORIGIN });
+        }
+      })
+      .catch(()=>{});
+  }
 
   // ---- UI refs ----
   const $ = (q)=>document.querySelector(q);
