@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <title>Checkout pedido</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Configura este meta con la URL pública de tu backend (sin /api) cuando despliegues -->
+  <meta name="backend-origin" content="" />
   <style>
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -21,9 +23,36 @@
   <button id="back">Volver a la app</button>
 
   <script>
-  const API = 'http://127.0.0.1:9000/api';
+  const LOCAL_BACKEND = 'http://127.0.0.1:9000';
+  const normalizeOrigin = (value) => String(value || '').trim().replace(/\/+$/, '');
+  function resolveBackendOrigin(){
+    const forced = (window.__BACKEND_ORIGIN__ || '').trim();
+    if (forced) return normalizeOrigin(forced);
+    const meta = document.querySelector('meta[name="backend-origin"]');
+    if (meta && meta.content && meta.content.trim()) {
+      return normalizeOrigin(meta.content.trim());
+    }
+    const { hostname, origin } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return LOCAL_BACKEND;
+    }
+    return normalizeOrigin(origin);
+  }
+  const BACKEND_ORIGIN = resolveBackendOrigin();
+  window.__BACKEND_ORIGIN__ = BACKEND_ORIGIN;
+  const API = `${BACKEND_ORIGIN}/api`;
   const statusEl = document.getElementById('status');
   document.getElementById('back').addEventListener('click', () => history.back());
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then((reg)=>{
+        if (reg.active) {
+          reg.active.postMessage({ type: 'SET_BACKEND_ORIGIN', value: BACKEND_ORIGIN });
+        }
+      })
+      .catch(()=>{});
+  }
 
   // genera o recupera un cliente_id
   function ensureClientId() {

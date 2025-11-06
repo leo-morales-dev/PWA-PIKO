@@ -1,4 +1,5 @@
 # main.py (FRONTEND / Flet)
+import os
 import flet as ft
 import requests
 import asyncio
@@ -6,7 +7,10 @@ from typing import List, Dict, Any, Optional
 from flet.core.page import PageDisconnectedException
 
 # --------------------- Config ---------------------
-API_URL = "http://127.0.0.1:9000/api"
+BACKEND_ORIGIN = os.environ.get("BACKEND_ORIGIN", "").rstrip("/")
+API_URL = os.environ.get("API_URL")
+if not API_URL:
+    API_URL = f"{BACKEND_ORIGIN}/api" if BACKEND_ORIGIN else "http://127.0.0.1:9000/api"
 POLL_SECONDS = 3
 
 # --------------------- Paleta (hex) ---------------------
