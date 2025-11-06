@@ -3,6 +3,3 @@ uvicorn[standard]==0.31.1
 sqlalchemy==2.0.36
 python-multipart==0.0.9
 pydantic==2.9.2
-# Install the backend package itself so ``uvicorn backend:app`` works when Render
-# runs commands inside this ``backend`` directory.
--e .
