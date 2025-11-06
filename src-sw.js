@@ -73,31 +73,6 @@ self.addEventListener('fetch', (event) => {
 
 // En tu service worker (src-sw.js o el que estés usando)
 self.addEventListener('notificationclick', (event) => {
-  const action = event.action;
-  const data = event.notification?.data || {};
-  const id = data.id;
-
-  event.notification.close();
-
-  if (!id) return;
-
-  // Confirmación: marcamos el pedido como "confirmado"
-  if (action === 'confirm') {
-    event.waitUntil(fetch(`http://127.0.0.1:9000/api/pedidos/${id}/estado`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estado: 'confirmado' })
-    }));
-    return;
-  }
-
-  // Abrir la página de estado
-  if (action === 'open' || action === '') {
-    event.waitUntil(clients.openWindow(`/status.html?pedido=${id}`));
-  }
-});
-
-self.addEventListener('notificationclick', (event) => {
   const action = event.action;                // 'confirm' | 'open' | ''
   const data = event.notification?.data || {};
   const id = data.id;

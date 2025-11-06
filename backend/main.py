@@ -7,18 +7,6 @@ from sqlalchemy.exc import OperationalError
 from datetime import datetime
 import json
 
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="API Cafetería Universitaria", version="0.1.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],          # <-- abrir para desarrollo
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 try:
     from backend.models import SessionLocal, Producto as ProductoModel, Pedido as PedidoModel
 except ModuleNotFoundError:  # running from the backend folder (Render root dir)
