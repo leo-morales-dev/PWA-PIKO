@@ -21,11 +21,19 @@
     header{
       padding:16px 24px; background:var(--panel); border-bottom:1px solid var(--sep);
       display:flex; justify-content:space-between; align-items:center;
-      position:sticky; top:0; z-index:10;
+      position:sticky; top:0; z-index:10; flex-wrap:wrap; gap:12px;
     }
     header h1{ margin:0; font-size:24px; font-weight:700; letter-spacing:.3px;}
-    header .right{display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px}
+    header .right{display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; min-width:fit-content}
     .dot{width:10px;height:10px;border-radius:99px}
+    .nav-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .nav-links a{
+      text-decoration:none; color:#e5e7eb; background:#1f2937; border-radius:999px;
+      padding:8px 16px; font-weight:600; font-size:14px; display:inline-flex; align-items:center;
+      transition:background .2s ease, transform .08s ease;
+    }
+    .nav-links a:hover{background:#243144;}
+    .nav-links a:active{transform:scale(.98);}
     .ok-dot{background:#22c55e} .bad-dot{background:#ef4444}
 
     .wrap{ max-width:1100px; width:100%; margin:18px auto; padding:0 16px }
@@ -70,6 +78,10 @@
 
   <header>
     <h1>Panel del barista</h1>
+    <nav class="nav-links">
+      <a href="/menu.html">Ir al menú</a>
+      <a href="/status.html">Pantalla de pedidos</a>
+    </nav>
     <div class="right">
       <span id="statusTxt">Conectando…</span>
       <div id="wsDot" class="dot bad-dot"></div>
