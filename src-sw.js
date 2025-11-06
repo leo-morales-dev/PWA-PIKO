@@ -44,8 +44,28 @@ self.addEventListener('message', (event) => {
 precacheAndRoute(self.__WB_MANIFEST || []);
 
 // SPA fallback para rutas navegables
-const navHandler = createHandlerBoundToURL('/index.html');
-registerRoute(new NavigationRoute(navHandler));
+const defaultNavHandler = createHandlerBoundToURL('/index.html');
+const navigationHandlers = new Map([
+  ['/', defaultNavHandler],
+  ['/index.html', defaultNavHandler],
+  ['/menu', createHandlerBoundToURL('/menu.html')],
+  ['/menu.html', createHandlerBoundToURL('/menu.html')],
+  ['/status', createHandlerBoundToURL('/status.html')],
+  ['/status.html', createHandlerBoundToURL('/status.html')],
+  ['/barista', createHandlerBoundToURL('/barista.html')],
+  ['/barista.html', createHandlerBoundToURL('/barista.html')]
+]);
+
+const normalizePathname = (value) => {
+  const trimmed = value.replace(/\/+$/, '');
+  return trimmed === '' ? '/' : trimmed;
+};
+
+registerRoute(new NavigationRoute((options) => {
+  const { url } = options;
+  const handler = navigationHandlers.get(normalizePathname(url.pathname));
+  return (handler || defaultNavHandler)(options);
+}));
 
 // ====== Estrategias en runtime ======
 
