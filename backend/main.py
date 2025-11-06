@@ -52,16 +52,6 @@ def serve_index_root():
         return FileResponse(index)
     return {"detail": "index.html no encontrado en /build/web"}
 
-# Fallback SPA para rutas de la app (excepto /api y /ws)
-@app.get("/{full_path:path}", include_in_schema=False)
-def spa_fallback(full_path: str):
-    if full_path.startswith("api") or full_path.startswith("ws"):
-        return {"detail": "Not Found"}
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return FileResponse(index)
-    return {"detail": "index.html no encontrado en /build/web"}
-
 # ------------------------ DB helpers ------------------------
 def get_db():
     db = SessionLocal()
@@ -222,6 +212,21 @@ async def actualizar_estado(pedido_id: int, body: dict, db: Session = Depends(ge
 
     await manager.broadcast_json({"type": "estado_actualizado", "pedido": payload})
     return {"ok": True}
+
+
+# ------------------------ Fallback SPA ------------------------
+@app.get("/{full_path:path}", include_in_schema=False)
+def spa_fallback(full_path: str):
+    """Devuelve index.html para rutas de la PWA sin ruta explícita."""
+
+    if full_path.startswith("api") or full_path.startswith("ws"):
+        return {"detail": "Not Found"}
+
+    index = STATIC_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index)
+    return {"detail": "index.html no encontrado en /build/web"}
+
 
 # ===== WebSocket para tablero / barista / clientes =====
 @app.websocket("/ws/pedidos")
