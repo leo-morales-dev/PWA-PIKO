@@ -87,7 +87,7 @@ def LandingView(page: ft.Page):
         bgcolor=PANEL,
         toolbar_height=64,
         leading=ft.Icon(name="local_cafe_rounded"),
-        title=ft.Text("Cafetería Universitaria", weight=ft.FontWeight.W_700),
+        title=ft.Text("Piko", weight=ft.FontWeight.W_700),
         actions=[
             ft.Container(
                 content=ft.Text("PWA", size=12, color="#cbd5e1"),
@@ -185,7 +185,7 @@ def MenuView(page: ft.Page):
         title=ft.Row(
             spacing=10,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[ft.Text("Cafetería Universitaria", size=22, weight=ft.FontWeight.W_700), cart_badge],
+            controls=[ft.Text("Piko", size=22, weight=ft.FontWeight.W_700), cart_badge],
         ),
         actions=[ft.Row(spacing=10, vertical_alignment=ft.CrossAxisAlignment.CENTER, controls=[ws_text, dot])]
     )
@@ -802,7 +802,7 @@ def WallboardView(page: ft.Page):
 
 # --------------------- Router ---------------------
 def app(page: ft.Page):
-    page.title = "Cafetería Universitaria"
+    page.title = "Piko"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = BG
 
