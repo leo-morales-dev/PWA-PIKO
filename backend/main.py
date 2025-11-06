@@ -45,7 +45,7 @@ def head_root():
     return {}
 
 # Raíz -> index.html
-def _serve_static_page(filename: str):
+def serve_static_page(filename: str):
     page = STATIC_DIR / filename
     if page.exists():
         return FileResponse(page)
@@ -54,22 +54,22 @@ def _serve_static_page(filename: str):
 
 @app.get("/", include_in_schema=False)
 def serve_index_root():
-    return _serve_static_page("index.html")
+    return serve_static_page("index.html")
 
 
 @app.get("/menu", include_in_schema=False)
 def serve_menu_page():
-    return _serve_static_page("menu.html")
+    return serve_static_page("menu.html")
 
 
 @app.get("/status", include_in_schema=False)
 def serve_status_page():
-    return _serve_static_page("status.html")
+    return serve_static_page("status.html")
 
 
 @app.get("/barista", include_in_schema=False)
 def serve_barista_page():
-    return _serve_static_page("barista.html")
+    return serve_static_page("barista.html")
 
 # ------------------------ DB helpers ------------------------
 def get_db():
